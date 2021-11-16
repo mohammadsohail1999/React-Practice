@@ -15,7 +15,8 @@ import axios from "axios";
 import { Pagination } from "@mui/material";
 import Gallery from "./Components/Gallery";
 import { theme } from "./utilities/theme";
-
+import { useDispatch, useSelector } from "react-redux";
+import { fetchImages, getGallery } from "./features/GallerySlice";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles({
@@ -32,41 +33,17 @@ const useStyles = makeStyles({
 function App() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-
   const [search, setSearch] = useState("");
 
-  const [results, setResults] = useState({
-    results: [],
-    total_results: 0,
-    loading: false,
-  });
+  const { loading, results, total_results } = useSelector(getGallery);
+
+  const dispatch = useDispatch();
 
   const classes = useStyles();
 
   useEffect(() => {
-    fetchImages(page, limit);
+    dispatch(fetchImages(page, limit, search));
   }, [page, limit, search]);
-
-  const fetchImages = async (page, limit) => {
-    setResults({ ...results, loading: true });
-
-    let url = search
-      ? `https://api.pexels.com/v1/search?query=${search}?page=${page}&per_page=${limit}`
-      : `https://api.pexels.com/v1/curated?page=${page}&per_page=${limit}`;
-
-    const { data } = await axios.get(url, {
-      headers: {
-        Authorization: process.env.REACT_APP_SECRET_API,
-      },
-    });
-
-    setResults({
-      ...results,
-      total_results: data.total_results ? data.total_results : 100,
-      results: data.photos,
-      loading: false,
-    });
-  };
 
   return (
     <>
@@ -80,7 +57,7 @@ function App() {
       >
         <Search search={search} setSearch={setSearch} setPage={setPage} />
 
-        {results.loading ? (
+        {loading ? (
           <Box
             sx={{
               display: "flex",
@@ -94,11 +71,11 @@ function App() {
           </Box>
         ) : (
           <>
-            <Gallery images={results.results} />
+            <Gallery images={results} />
           </>
         )}
 
-        {results.total_results ? (
+        {total_results ? (
           <Box marginTop={10} className={classes.paginateWrapper}>
             <Pagination
               color="secondary"
@@ -106,7 +83,7 @@ function App() {
                 setPage(value);
               }}
               page={page}
-              count={results.total_results / limit}
+              count={total_results / limit}
             />
             <FormControl variant="standard" sx={{ m: 1, minWidth: 50 }}>
               <Select
