@@ -30,7 +30,7 @@ const Carousel = () => {
     return () => {
       clearInterval(clear);
     };
-  }, [count]);
+  }, [count,direction,images.length]);
 
   const increment = () => {
     setDirection("increment");
